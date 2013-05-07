@@ -6,7 +6,9 @@ import java.util.Arrays;
 import junit.framework.Assert;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import com.sb.model.Bill;
 import com.sb.model.Customer;
@@ -99,10 +101,18 @@ public class IntegrityTest {
 		Bill bill = new Bill(EMPLOYEE_CUSTOMER, Arrays.asList(nonGroceryLessThanHundredItem, groceryMoreThanHundredItem));
 		Assert.assertEquals(new BigDecimal("170.0"), bill.netPayableAmount());
 	}
+	
+	@Rule
+    public ExpectedException exception = ExpectedException.none();
 
-	@Test(expected = IllegalArgumentException.class)
+	
+	@Test
 	public void givenABillWithNegativeLineItemPriceIsNotAllowed() {
-		LineItem negativePriceItem = new LineItem("L5", ItemType.GROCERY, new BigDecimal("-140"));
+		BigDecimal price = new BigDecimal("-140");
+		exception.expect(IllegalArgumentException.class);
+		exception.expectMessage("Line item price: "+price.doubleValue()+" cannot be less than zero");
+		LineItem negativePriceItem = new LineItem("L5", ItemType.GROCERY, price);
 		Bill bill = new Bill(EMPLOYEE_CUSTOMER, Arrays.asList(negativePriceItem));
+		
 	}
 }
