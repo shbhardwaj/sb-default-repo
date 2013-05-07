@@ -1,6 +1,7 @@
 package com.sb.model;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 
 public class Item {
 
@@ -41,7 +42,8 @@ public class Item {
 			scaledNumber += 5 - resolution;
 		}
 		double result = scaledNumber / 100;
-		return new BigDecimal(String.valueOf(result));
+		String resultVal = new DecimalFormat("#.00").format(result);
+		return new BigDecimal(resultVal);
 	}
 	
 }

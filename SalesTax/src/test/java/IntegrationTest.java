@@ -1,4 +1,6 @@
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.List;
 
@@ -35,13 +37,13 @@ food, and medical products that are exempt
 	public void inputOne(){
 		Customer customer = new Customer("Default");
 		Item book = new Item("Book", new BigDecimal("12.49"), 1, SaleTax.EXEMPT, ImportTax.EXEMPT);
-		Item musicCD = new Item("Music CD", new BigDecimal("14.49"), 1, SaleTax.BASIC, ImportTax.EXEMPT);
+		Item musicCD = new Item("Music CD", new BigDecimal("14.99"), 1, SaleTax.BASIC, ImportTax.EXEMPT);
 		Item choclateBar = new Item("Choclate Bar", new BigDecimal("0.85"), 1, SaleTax.EXEMPT, ImportTax.EXEMPT);
 		List<Item> items = Arrays.asList(book,musicCD,choclateBar);
 		
 		Bill bill = new Bill(customer,items);
 		
-		//Assert.assertEquals(new BigDecimal("1.50"), bill.getTotalSalesTax());
+		Assert.assertEquals(new BigDecimal("1.50"), bill.getTotalSalesTax());
 		Assert.assertEquals(new BigDecimal("29.83"), bill.getTotalAmount());
 	}
 	
@@ -99,8 +101,43 @@ food, and medical products that are exempt
 		
 		Bill bill = new Bill(customer,items);
 		
-		//Assert.assertEquals(new BigDecimal("6.70"), bill.getTotalSalesTax());
+		Assert.assertEquals(new BigDecimal("6.70"), bill.getTotalSalesTax());
 		Assert.assertEquals(new BigDecimal("74.68"), bill.getTotalAmount());
 	}
+	
+	@Test
+	public void xxx(){
+		BigDecimal basePrice = new BigDecimal("14.49");
+		//SaleTax.BASIC, ImportTax.EXEMPT
+		BigDecimal tax1 = basePrice.multiply(SaleTax.BASIC.getTaxRate());
+		BigDecimal tax2 = basePrice.multiply(ImportTax.EXEMPT.getTaxRate());
+		System.out.println("SalesTax1 == "+tax1);
+		System.out.println("SalesTax1 == "+tax2);
+		BigDecimal roundUpSalesTax1 = roundUpSalesTax(tax1);
+		BigDecimal roundUpSalesTax2 = roundUpSalesTax(tax2);
+		System.out.println("roundUpSalesTax1 == "+roundUpSalesTax1);
+		System.out.println("roundUpSalesTax2 == "+roundUpSalesTax2);
+		BigDecimal roundUpSalesTax3 = roundUpSalesTax(tax1.add(tax2));
+		System.out.println("roundUpSalesTax3 == "+roundUpSalesTax3);
+	}
+	
+	@Test
+	public void zzz(){
+		BigDecimal basePrice = new BigDecimal("1.499");
+		BigDecimal roundUpSalesTax = roundUpSalesTax(basePrice);
+		Assert.assertEquals(new BigDecimal("1.50"), roundUpSalesTax);
+	}
+	
+	private BigDecimal roundUpSalesTax(BigDecimal value) {
+		double scaledNumber = value.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue() * 100;
+		double resolution = scaledNumber % 5;
+		if (resolution != 0) {
+			scaledNumber += 5 - resolution;
+		}
+		double result = scaledNumber / 100;
+		String resultVal = new DecimalFormat("#.00").format(result);
+		System.out.println(resultVal);
+		return new BigDecimal(resultVal);
+}
 	
 }
