@@ -1,6 +1,4 @@
 import java.math.BigDecimal;
-import java.math.MathContext;
-import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.List;
 
@@ -105,39 +103,5 @@ food, and medical products that are exempt
 		Assert.assertEquals(new BigDecimal("74.68"), bill.getTotalAmount());
 	}
 	
-	@Test
-	public void xxx(){
-		BigDecimal basePrice = new BigDecimal("14.49");
-		//SaleTax.BASIC, ImportTax.EXEMPT
-		BigDecimal tax1 = basePrice.multiply(SaleTax.BASIC.getTaxRate());
-		BigDecimal tax2 = basePrice.multiply(ImportTax.EXEMPT.getTaxRate());
-		System.out.println("SalesTax1 == "+tax1);
-		System.out.println("SalesTax1 == "+tax2);
-		BigDecimal roundUpSalesTax1 = roundUpSalesTax(tax1);
-		BigDecimal roundUpSalesTax2 = roundUpSalesTax(tax2);
-		System.out.println("roundUpSalesTax1 == "+roundUpSalesTax1);
-		System.out.println("roundUpSalesTax2 == "+roundUpSalesTax2);
-		BigDecimal roundUpSalesTax3 = roundUpSalesTax(tax1.add(tax2));
-		System.out.println("roundUpSalesTax3 == "+roundUpSalesTax3);
-	}
-	
-	@Test
-	public void zzz(){
-		BigDecimal basePrice = new BigDecimal("1.499");
-		BigDecimal roundUpSalesTax = roundUpSalesTax(basePrice);
-		Assert.assertEquals(new BigDecimal("1.50"), roundUpSalesTax);
-	}
-	
-	private BigDecimal roundUpSalesTax(BigDecimal value) {
-		double scaledNumber = value.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue() * 100;
-		double resolution = scaledNumber % 5;
-		if (resolution != 0) {
-			scaledNumber += 5 - resolution;
-		}
-		double result = scaledNumber / 100;
-		String resultVal = new DecimalFormat("#.00").format(result);
-		System.out.println(resultVal);
-		return new BigDecimal(resultVal);
-}
 	
 }
