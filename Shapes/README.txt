@@ -18,4 +18,4 @@ Please ensure that you have maven installed on your system.
 This project is built using JDK 1.7 Please ensure that you have JDK 1.7 deployed on your machine
 
 Acceptance Test:
-Acceptance tests can be found in ShapeAreaTest.java. Please run ShapeAreaTest to understand the program.
+Acceptance tests can be found in ShapeAreaTest.java. Please run ShapeAreaTest to understand the program flow.

@@ -3,7 +3,9 @@ package com.sb.shape.area;
 import java.math.BigDecimal;
 
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import com.sb.exception.UnknownShapeException;
 import com.sb.model.Circle;
@@ -16,6 +18,9 @@ public class ShapeAreaTest {
 
 	private final ShapeVisitor<BigDecimal,Parameter> visitor = new ShapeAreaVisitor<BigDecimal, Object>();
 
+	@Rule
+    public ExpectedException exception = ExpectedException.none();
+	
 	@Test
 	public void shouldReturnAreaOfCircle() {
 		Circle circle = new Circle(new BigDecimal("1"));
@@ -24,9 +29,12 @@ public class ShapeAreaTest {
 		Assert.assertEquals(bigDecimal, area);
 	}
 	
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void shouldThrowExceptionWhenRadiusIsNegative() {
-		Circle circle = new Circle(new BigDecimal("-1"));
+		BigDecimal radius = new BigDecimal("-1");
+		exception.expect(IllegalArgumentException.class);
+		exception.expectMessage("Circle radius : " + radius+ " cannot be less than or equal to zero");
+		Circle circle = new Circle(radius);
 		circle.accept(visitor, null);
 	}
 
@@ -39,18 +47,22 @@ public class ShapeAreaTest {
 		Assert.assertEquals(new BigDecimal("12"), area);
 	}
 	
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void shouldThrowExceptionWhenRectangleBaseIsNegative() {
 		BigDecimal base = new BigDecimal("-4");
 		BigDecimal height = new BigDecimal("3");
+		exception.expect(IllegalArgumentException.class);
+		exception.expectMessage("Rectangle base : " + base+ " cannot be less than or equal to zero");
 		Rectangle rectangle = new Rectangle(base, height);
 		rectangle.accept(visitor, null);
 	}
 	
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void shouldThrowExceptionWhenRectangleHeightIsNegative() {
 		BigDecimal base = new BigDecimal("4");
 		BigDecimal height = new BigDecimal("-3");
+		exception.expect(IllegalArgumentException.class);
+		exception.expectMessage("Rectangle height : " + height+ " cannot be less than or equal to zero");
 		Rectangle rectangle = new Rectangle(base, height);
 		rectangle.accept(visitor, null);
 	}
@@ -64,25 +76,31 @@ public class ShapeAreaTest {
 		Assert.assertEquals(new BigDecimal("6"), area);
 	}
 	
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void shouldThrowExceptionWhenTriangleBaseIsNegative() {
 		BigDecimal base = new BigDecimal("-4");
 		BigDecimal height = new BigDecimal("3");
+		exception.expect(IllegalArgumentException.class);
+		exception.expectMessage("Triangle base : " + base+ " cannot be less than or equal to zero");
 		Triangle triangle = new Triangle(base, height);
 		triangle.accept(visitor, null);
 	}
 	
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void shouldThrowExceptionWhenTriangleHeightIsNegative() {
 		BigDecimal base = new BigDecimal("4");
 		BigDecimal height = new BigDecimal("-3");
+		exception.expect(IllegalArgumentException.class);
+		exception.expectMessage("Triangle height : " + height+ " cannot be less than or equal to zero");
 		Triangle triangle = new Triangle(base, height);
 		triangle.accept(visitor, null);
 	}
 	
-	@Test(expected = UnknownShapeException.class)
+	@Test
 	public void givenAnUnknownShapeWhenAreaIsCalculatedThenUnknownShapeExceptionShouldResult() {
 		UnknownShape shape = new UnknownShape();
+		exception.expect(UnknownShapeException.class);
+		exception.expectMessage("Shape with class name: " + shape.getClass().getCanonicalName()+ " is NOT handled yet.");
 		shape.accept(visitor, null);
 		
 	}

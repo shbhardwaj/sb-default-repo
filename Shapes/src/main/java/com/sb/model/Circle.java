@@ -9,8 +9,7 @@ public class Circle implements Shape<BigDecimal, Parameter> {
 
 	public Circle(BigDecimal radius) {
 		if (radius.doubleValue() <= 0D) {
-			throw new IllegalArgumentException(" Circle radius : " + radius
-					+ " cannot be less than or equal to zero");
+			throw new IllegalArgumentException("Circle radius : " + radius+ " cannot be less than or equal to zero");
 		}
 		this.radius = radius;
 	}

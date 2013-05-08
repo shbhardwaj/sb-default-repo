@@ -10,12 +10,10 @@ public class Triangle implements Shape<BigDecimal, Parameter> {
 
 	public Triangle(BigDecimal base, BigDecimal height) {
 		if (base.doubleValue() <= 0D) {
-			throw new IllegalArgumentException("Triangle base : " + base
-					+ " cannot be less than or equal to zero");
+			throw new IllegalArgumentException("Triangle base : " + base+ " cannot be less than or equal to zero");
 		}
 		if (height.doubleValue() <= 0D) {
-			throw new IllegalArgumentException("Triangle height : " + height
-					+ " cannot be less than or equal to zero");
+			throw new IllegalArgumentException("Triangle height : " + height+ " cannot be less than or equal to zero");
 		}
 		this.base = base;
 		this.height = height;

@@ -10,12 +10,10 @@ public class Rectangle implements Shape<BigDecimal, Parameter> {
 
 	public Rectangle(BigDecimal base, BigDecimal height) {
 		if (base.doubleValue() <= 0D) {
-			throw new IllegalArgumentException("Rectangle base : " + base
-					+ " cannot be less than or equal to zero");
+			throw new IllegalArgumentException("Rectangle base : " + base+ " cannot be less than or equal to zero");
 		}
 		if (height.doubleValue() <= 0D) {
-			throw new IllegalArgumentException("Rectangle height : " + height
-					+ " cannot be less than or equal to zero");
+			throw new IllegalArgumentException("Rectangle height : " + height+ " cannot be less than or equal to zero");
 		}
 		this.base = base;
 		this.height = height;
