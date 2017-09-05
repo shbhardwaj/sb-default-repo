@@ -1,0 +1,136 @@
+import java.io.closeable;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileChannel.MapMode;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class FileReader implements Closeable {
+  
+  private static final int DEFAULT_BUFFER_SIZE = 4096;
+  private static final Charset DEFAULT_CHARSET = Charset.defaultCharset();
+  
+  private final byte[][] newLineSequences;
+  private final int bufferSize;
+  private final Charset charSet;
+  
+  private final String filePath;
+  private final RandomAccessFile file;
+  private final FileChannel channel;
+  
+  private long endPosition;
+  private long startPosition;
+  private byte[] leftOverData;
+  
+  public FileReader(String filePath) throws IOException {
+    this(filePath, DEFAULT_BUFFER_SIZE, DEFAULT_CHARSET);
+  }
+  
+  public FileReader(String filePath, int bufferSize) throws IOException {
+    this(filePath, bufferSize, DEFAULT_CHARSET);
+  }
+  
+  public FileReader(String filePath, int bufferSize, Charset encoding) throws IOException {
+    this.newLineSequences = new byte[][] {"\r\n".getBytes(encoding), "\n".getBytes(encoding), "\r".getBytes(encoding)};
+    this.bufferSize = bufferSize;
+    this.charSet = encoding;
+    
+    this.filePath = filePath;
+    this.file = new RandomAccessFile(filePath, "r");
+    this.channel = file.getChannel();
+    
+    endPosition = channel.size();
+    startPosition = Math.max(0, endPosition - this.bufferSize);
+  }
+  
+  public byte[] bytes() throws IOException {
+    while(endPosition!=0) {
+      long mappedSize = endPosition - startPosition;
+      int size = mappedSize < bufferSize ? (int) mappedSize : bufferSize;
+      MappedByteBuffer mb = channel.map(mapMode.READ_ONLY, startPosition, size);
+      byte[] dst = new byte[size];
+      
+      mb.get(dst);
+      
+      // Is there any leftover data from the previous iteration, if yes then append it to the end of dst array.
+      if(leftOverData != null) {
+        int originalLen = dst.length;
+        dst = Arrays.copyOf(dst, dst.length + leftOverData.length);
+        System.arraycopy(leftOverData, 0, dst, originalLen, leftOverData.length);
+      }
+      
+      byte[] data;
+      int newLineIdx = startOfNewLineIdx(dst);
+      if(newLineIdx != -1) {
+        // copy the leftover data which is not processed in this iteration.
+        leftOverData = Arrays.copyOfRange(dst, 0, newLineIdx);
+        data = Arrays.copyOfRange(dst, newLineIdx, dst.length);
+      } else {
+        data = dst;
+      }
+      
+      // update the positions.
+      endPosition = startPosition;
+      startPosition = Math.max(0, endPosition - bufferSize);
+      
+      return data;
+    }
+    // After the last iteration is there any leftover data, if yes then return that as well.
+    if(endPosition == 0 && leftOverData != null ) {
+      byte[] data = Arrays.copyOfRange(leftOverData, 0, leftOverData.length);
+      leftOverData = null;
+      return data;
+    }
+    // if nothing remains to be returned then return null.
+    return new byte[0];
+  }
+  
+  @Override
+  public void close() {
+    if(null != file) {
+      try {
+            file.close();
+            if(channel.isOpen()){
+              channel.close();
+            }
+          } catch(IOException e) {
+            //TODO: Handle the exception here.
+          }
+    }
+  }
+  
+  public List<String> readLines() throws IOException {
+    byte[] data = bytes();
+    return lines(data);
+  }
+  
+  public List<String> lines(byte[] bytes) {
+    String[] dataArr = new String(bytes, this.charSet).split("[\r\n]+");
+    List<String> lines = Arrays.stream(dataArr).filter(line -> line != null && !line.trim().isEmpty()).collect(Collectors.toList());
+    return lines;
+  }
+  
+  private int startOfNewLineIdx(byte[] data) {
+    for(byte[] newLineSequence : newLineSequences) {
+      for(int i=0; i< data.length; i++) {
+        if(data[i] == newLineSequence[0]) {
+          boolean match = true;
+          for(j=0; j<newLineSequence.length; j++) {
+            if(i+j < data.length && data[i+j] != newLineSequence[j]) {
+              match = false;
+            }
+          }
+          if(match) {
+            return i+newLineSequence.length;
+          }
+        }
+      }
+    }
+    return -1;
+  }
+  
+}
