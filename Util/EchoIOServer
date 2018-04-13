@@ -1,0 +1,81 @@
+package com.sb.parallel;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * 
+ * Simple Blocking IO Server
+ *
+ */
+public class EchoIOServer {
+	static final Logger logger = LoggerFactory.getLogger(EchoIOServer.class);
+
+	public static void main(String[] args) throws IOException {
+
+		int portNumber = 4444;
+		logger.debug("Waiting on port : {}", portNumber);
+		boolean listening = true;
+		// bind server socket to port
+		ServerSocket serverSocket = new ServerSocket(portNumber);
+		try {
+			while (listening) { // long running server
+
+				/*
+				 * Wait for the client to make a connection and when it does, create a new
+				 * socket to handle the request
+				 */
+				Socket clientSocket = serverSocket.accept();
+
+				handle(clientSocket);
+			}
+		} finally {
+			serverSocket.close();
+		}
+
+	}
+
+	private static void handle(Socket clientSocket) {
+		try {
+			// Get input and output stream from the socket
+			PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+			BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
+			// Process client request and send back response
+			String request, response;
+			request = in.readLine();
+			logger.debug("Received request data {} ", request);
+			response = processRequest(request);
+			out.println(response);
+			clientSocket.close();
+		} catch (IOException | InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static void handleInThread(Socket clientSocket) {
+		// Handle each connection in a new thread to manage concurrent users
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				handle(clientSocket);
+			}
+		}).start();
+	}
+
+	public static String processRequest(String request) throws InterruptedException {
+		// Blocking here for few seconds
+		new LinkedBlockingQueue<>().poll(40, TimeUnit.SECONDS);
+		//System.out.println("Server receive message from > " + request);
+		return request;
+	}
+}
