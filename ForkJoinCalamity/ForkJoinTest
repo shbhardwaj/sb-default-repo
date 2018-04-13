@@ -1,0 +1,118 @@
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ForkJoinPool;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class ForkJoinTest {
+
+	static final Logger logger = LoggerFactory.getLogger(ForkJoinTest.class);
+	int parallelism = 10;
+
+	public void v1(Collection<Data> data, Resolver resolver) {
+		ForkJoinPool forkJoinPool = new ForkJoinPool(Math.max(Math.min(data.size(), parallelism), 1));
+		List<Data> notParallelized = new CopyOnWriteArrayList<>();
+		List<Integer> result = new CopyOnWriteArrayList<>();
+
+		data.parallelStream().forEach(val -> {
+			if (val.i % 2 == 0) {
+				notParallelized.add(val);
+			} else {
+				forkJoinPool.submit(() -> {
+					try {
+						result.add(val.map(resolver));
+					} catch (Exception e) {
+					}
+				}).join();
+			}
+		});
+
+		notParallelized.forEach(v -> {
+			logger.debug("Non parallelized val {}", v);
+			result.add(v.map(resolver));
+		});
+	}
+
+	public void v2(Collection<Data> data, Resolver resolver) {
+		ForkJoinPool forkJoinPool = new ForkJoinPool(Math.max(Math.min(data.size(), parallelism), 1));
+		List<Data> notParallelized = new CopyOnWriteArrayList<>();
+		List<Integer> result = new CopyOnWriteArrayList<>();
+		forkJoinPool.submit(() -> {
+			data.parallelStream().forEach(val -> {
+				if (val.i % 2 == 0) {
+					notParallelized.add(val);
+				} else {
+					try {
+						result.add(val.map(resolver));
+					} catch (Exception e) {
+					}
+				}
+			});
+		}).join();
+
+		notParallelized.forEach(v -> {
+			logger.debug("Non parallelized val {}", v);
+			result.add(v.map(resolver));
+		});
+	}
+
+	public static void main(String[] args) {
+		Resolver resolver = new Resolver();
+		ForkJoinTest forkJoinTest = new ForkJoinTest();
+		forkJoinTest.v1(Data.getData(70000), resolver);
+
+	}
+}
+
+class Resolver {
+	EchoIOClient client = new EchoIOClient();
+
+	public String resolve(int i) {
+		try {
+			ForkJoinTest.logger.debug("Sending request for : {}", i);
+			return client.sendRequest(i);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return "-1";
+	}
+}
+
+class Data implements Comparable<Data> {
+	Integer i;
+
+	public Data(Integer i) {
+		this.i = i;
+	}
+
+	public Integer map(Resolver resolver) {
+		String r = resolver.resolve(i);
+		if (i % 3 == 0)
+			throw new IllegalStateException("Generated exception");
+		if (Integer.valueOf(r).intValue() == i.intValue()) {
+			return i;
+		}
+		return -1;
+	}
+
+	static ConcurrentSkipListSet<Data> getData(int count) {
+		ConcurrentSkipListSet<Data> data = new ConcurrentSkipListSet<Data>();
+		int i = 0;
+		while (i < count) {
+			data.add(new Data(i));
+			i++;
+		}
+		return data;
+	}
+
+	@Override
+	public int compareTo(Data d) {
+		return this.i.compareTo(d.i);
+	}
+}
