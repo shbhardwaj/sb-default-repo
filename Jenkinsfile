@@ -14,4 +14,7 @@ echo "M2_HOME = ${M2_HOME}"
       }
     }
   }
+  environment {
+    GIT_SSL_NO_VERIFY = 'true'
+  }
 }
