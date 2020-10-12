@@ -5,7 +5,7 @@
   <version>0.0.1-SNAPSHOT</version>
   
   <properties>
-		<version.junit>4.4</version.junit>
+		<version.junit>4.13.1</version.junit>
 	</properties>
 	<dependencies>
 		<dependency>
